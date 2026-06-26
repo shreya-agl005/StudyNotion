@@ -43,7 +43,7 @@ Study Notion is an ED Tech (Education Technology) web application developed usin
 
 1. Clone the repository to your local machine.
    ```
-      git clone https://github.com/Abhay-yadav966/StudyNotion.git
+      git clone https://github.com/shreya-agl005/StudyNotion.git
    ```
 2. Install the required packages.
 
@@ -71,7 +71,3 @@ You can add your own tailwind.config.js file to customize your Tailwind setup.
 
 Contributions are welcome! If you have any suggestions or find any issues, please feel free to open an issue or a pull request.
 
-## Authors
-
-- Vedant Agarwal
-- Jaydeep
