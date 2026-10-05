@@ -210,7 +210,7 @@ exports.getAllCourses = async (req, res) => {
         thumbnail: true,
         instructor: true,
         ratingAndReviews: true,
-        studentsEnrolled: true,
+        studentsEnroled: true,
       }
     )
       .populate("instructor")
@@ -449,6 +449,12 @@ exports.deleteCourse = async (req, res) => {
     if (!course) {
       return res.status(404).json({ message: "Course not found" })
     }
+    if (course.instructor.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: "You can only delete your own courses",
+      })
+    }
 
     // Unenroll students from the course
     const studentsEnrolled = course.studentsEnroled
@@ -473,6 +479,14 @@ exports.deleteCourse = async (req, res) => {
       // Delete the section
       await Section.findByIdAndDelete(sectionId)
     }
+
+    // Remove the course from its category and from the instructor
+    await Category.findByIdAndUpdate(course.category, {
+      $pull: { courses: courseId },
+    })
+    await User.findByIdAndUpdate(course.instructor, {
+      $pull: { courses: courseId },
+    })
 
     // Delete the course
     await Course.findByIdAndDelete(courseId)

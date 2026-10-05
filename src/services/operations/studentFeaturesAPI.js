@@ -46,6 +46,7 @@ export async function BuyCourse(
       toast.error(
         "Razorpay SDK failed to load. Check your Internet Connection."
       );
+      toast.dismiss(toastId);
       return;
     }
 
@@ -71,7 +72,8 @@ export async function BuyCourse(
 
     // Opening the Razorpay SDK
     const options = {
-      key: "rzp_test_2R3g9CgKS9dEEC",
+      // Must be the same key id as RAZORPAY_KEY in server/.env (the order is created with it)
+      key: process.env.REACT_APP_RAZORPAY_KEY,
       currency: orderResponse.data.data.currency,
       amount: `${orderResponse.data.data.amount}`,
       order_id: orderResponse.data.data.id,
@@ -100,7 +102,9 @@ export async function BuyCourse(
     });
   } catch (error) {
     console.log("PAYMENT API ERROR............", error);
-    toast.error("Could Not make Payment.");
+    toast.error(
+      error.response?.data?.message || error.message || "Could Not make Payment."
+    );
   }
   toast.dismiss(toastId);
 }

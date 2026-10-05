@@ -71,3 +71,6 @@ You can add your own tailwind.config.js file to customize your Tailwind setup.
 
 Contributions are welcome! If you have any suggestions or find any issues, please feel free to open an issue or a pull request.
 
+## Authors
+
+- Shreya Agarwala

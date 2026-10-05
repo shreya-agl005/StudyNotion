@@ -20,15 +20,23 @@ function Catalog() {
   const [categoryId, setCategoryId] = useState("")
   // Fetch All Categories
   useEffect(() => {
+    setCatalogPageData(null)
+    setCategoryId("")
     ;(async () => {
       try {
         const res = await apiConnector("GET", categories.CATEGORIES_API)
         const category_id = res?.data?.data?.filter(
           (ct) => ct.name.split(" ").join("-").toLowerCase() === catalogName
-        )[0]._id
+        )[0]?._id
+        if (!category_id) {
+          // Unknown category in the URL: show the error page instead of spinning forever
+          setCatalogPageData({ success: false })
+          return
+        }
         setCategoryId(category_id)
       } catch (error) {
         console.log("Could not fetch Categories.", error)
+        setCatalogPageData({ success: false })
       }
     })()
   }, [catalogName])
