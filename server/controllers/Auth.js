@@ -57,15 +57,8 @@ exports.signup = async (req, res) => {
 
     // Find the most recent OTP for the email
     const response = await OTP.find({ email }).sort({ createdAt: -1 }).limit(1)
-    console.log(response)
-    if (response.length === 0) {
-      // OTP not found for the email
-      return res.status(400).json({
-        success: false,
-        message: "The OTP is not valid",
-      })
-    } else if (otp !== response[0].otp) {
-      // Invalid OTP
+    if (response.length === 0 || otp !== response[0].otp) {
+      // OTP not found for the email, expired, or does not match
       return res.status(400).json({
         success: false,
         message: "The OTP is not valid",
@@ -77,7 +70,7 @@ exports.signup = async (req, res) => {
 
     // Create the user
     let approved = ""
-    approved === "Instructor" ? (approved = false) : (approved = true)
+    accountType === "Instructor" ? (approved = false) : (approved = true)
 
     // Create the Additional Profile For User
     const profileDetails = await Profile.create({
@@ -95,8 +88,9 @@ exports.signup = async (req, res) => {
       accountType: accountType,
       approved: approved,
       additionalDetails: profileDetails._id,
-      image: "",
+      image: `https://api.dicebear.com/5.x/initials/svg?seed=${firstName}%20${lastName}`,
     })
+    user.password = undefined
 
     return res.status(200).json({
       success: true,
@@ -115,44 +109,33 @@ exports.signup = async (req, res) => {
 // Login controller for authenticating users
 exports.login = async (req, res) => {
   try {
-    // Get email and password from request body
     const { email, password } = req.body
 
-    // Check if email or password is missing
     if (!email || !password) {
-      // Return 400 Bad Request status code with error message
       return res.status(400).json({
         success: false,
         message: `Please Fill up All the Required Fields`,
       })
     }
 
-    // Find user with provided email
     const user = await User.findOne({ email }).populate("additionalDetails")
 
-    // If user not found with provided email
     if (!user) {
-      // Return 401 Unauthorized status code with error message
       return res.status(401).json({
         success: false,
         message: `User is not Registered with Us Please SignUp to Continue`,
       })
     }
 
-    // Generate JWT token and Compare Password
     if (await bcrypt.compare(password, user.password)) {
       const token = jwt.sign(
-        { email: user.email, id: user._id, role: user.role },
+        { email: user.email, id: user._id, role: user.accountType },
         process.env.JWT_SECRET,
-        {
-          expiresIn: "24h",
-        }
+        { expiresIn: "24h" }
       )
-
-      // Save token to user document in database
       user.token = token
       user.password = undefined
-      // Set cookie for token and return success response
+
       const options = {
         expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
         httpOnly: true,
@@ -161,7 +144,7 @@ exports.login = async (req, res) => {
         success: true,
         token,
         user,
-        message: `User Login Success`,
+        message: `User Logged in successfully`,
       })
     } else {
       return res.status(401).json({
@@ -171,57 +154,54 @@ exports.login = async (req, res) => {
     }
   } catch (error) {
     console.error(error)
-    // Return 500 Internal Server Error status code with error message
     return res.status(500).json({
       success: false,
       message: `Login Failure Please Try Again`,
     })
   }
 }
+
 // Send OTP For Email Verification
 exports.sendotp = async (req, res) => {
   try {
     const { email } = req.body
 
-    // Check if user is already present
-    // Find user with provided email
-    const checkUserPresent = await User.findOne({ email })
-    // to be used in case of signup
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Email is required to send OTP",
+      })
+    }
 
-    // If user found with provided email
+    // Check if user is already present
+    const checkUserPresent = await User.findOne({ email })
     if (checkUserPresent) {
-      // Return 401 Unauthorized status code with error message
       return res.status(401).json({
         success: false,
         message: `User is Already Registered`,
       })
     }
 
-    var otp = otpGenerator.generate(6, {
+    const otp = otpGenerator.generate(6, {
       upperCaseAlphabets: false,
       lowerCaseAlphabets: false,
       specialChars: false,
     })
-    const result = await OTP.findOne({ otp: otp })
-    console.log("Result is Generate OTP Func")
-    console.log("OTP", otp)
-    console.log("Result", result)
-    while (result) {
-      otp = otpGenerator.generate(6, {
-        upperCaseAlphabets: false,
-      })
-    }
-    const otpPayload = { email, otp }
-    const otpBody = await OTP.create(otpPayload)
-    console.log("OTP Body", otpBody)
-    res.status(200).json({
+
+    // Saving the OTP triggers the verification email (see models/OTP.js)
+    await OTP.create({ email, otp })
+
+    return res.status(200).json({
       success: true,
       message: `OTP Sent Successfully`,
-      otp,
     })
   } catch (error) {
-    console.log(error.message)
-    return res.status(500).json({ success: false, error: error.message })
+    console.log("Send OTP Error:", error.message)
+    return res.status(500).json({
+      success: false,
+      message: "Could not send OTP. Please check the email address and try again.",
+      error: error.message,
+    })
   }
 }
 
@@ -254,7 +234,7 @@ exports.changePassword = async (req, res) => {
       { new: true }
     )
 
-    // Send notification email
+    // Send notification email (the password is already updated, so a mail failure is only logged)
     try {
       const emailResponse = await mailSender(
         updatedUserDetails.email,
@@ -266,13 +246,7 @@ exports.changePassword = async (req, res) => {
       )
       console.log("Email sent successfully:", emailResponse.response)
     } catch (error) {
-      // If there's an error sending the email, log the error and return a 500 (Internal Server Error) error
-      console.error("Error occurred while sending email:", error)
-      return res.status(500).json({
-        success: false,
-        message: "Error occurred while sending email",
-        error: error.message,
-      })
+      console.error("Error occurred while sending email:", error.message)
     }
 
     // Return success response

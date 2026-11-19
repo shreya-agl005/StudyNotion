@@ -8,7 +8,7 @@
     "axios": "^1.5.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
-    "chat.js": "^1.0.2",
+    "chart.js": "^4.5.1",
     "cloudinary": "^1.41.0",
     "concurrently": "^8.2.1",
     "cookie-parser": "^1.4.6",
@@ -16,7 +16,6 @@
     "dotenv": "^16.4.5",
     "express-fileupload": "^1.4.1",
     "fs": "^0.0.1-security",
-    "fsevents": "^2.3.3",
     "https": "^1.0.0",
     "i": "^0.3.7",
     "jsonwebtoken": "^9.0.2",
@@ -64,7 +63,8 @@
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "server-start": "cd server && npm run dev",
-    "dev": "concurrently -n \"client,server\" -c \"bgBlue,bgYellow\" \"npm start\" \"npm run server\""
+    "server": "npm run server-start",
+    "dev": "concurrently -n \"client,server\" -c \"bgBlue,bgYellow\" \"npm run react-start\" \"npm run server-start\""
   },
   "eslintConfig": {
     "extends": [
@@ -86,5 +86,8 @@
   },
   "devDependencies": {
     "tailwindcss": "^3.2.7"
+  },
+  "optionalDependencies": {
+    "fsevents": "^2.3.3"
   }
 }

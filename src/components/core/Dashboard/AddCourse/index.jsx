@@ -1,6 +1,20 @@
+import { useEffect, useState } from "react"
+import { useDispatch } from "react-redux"
+
+import { resetCourseState } from "../../../../slices/courseSlice"
 import RenderSteps from "./RenderSteps"
 
 export default function AddCourse() {
+  const dispatch = useDispatch()
+  const [ready, setReady] = useState(false)
+
+  // Start from a blank form, not from a course that was being edited earlier.
+  // The form is only rendered after the reset so it never picks up stale values.
+  useEffect(() => {
+    dispatch(resetCourseState())
+    setReady(true)
+  }, [dispatch])
+
   return (
     <>
       <div className="flex w-full items-start gap-x-6">
@@ -8,9 +22,7 @@ export default function AddCourse() {
           <h1 className="mb-14 text-3xl font-medium text-richblack-5">
             Add Course
           </h1>
-          <div className="flex-1">
-            <RenderSteps />
-          </div>
+          <div className="flex-1">{ready && <RenderSteps />}</div>
         </div>
         {/* Course Upload Tips */}
         <div className="sticky top-10 hidden max-w-[400px] flex-1 rounded-md border-[1px] border-richblack-700 bg-richblack-800 p-6 xl:block">

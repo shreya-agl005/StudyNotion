@@ -1,0 +1,5 @@
+Step 1: Starting debug script
+Step 2: Loading dotenv
+PORT: 4000
+MONGODB_URL: exists
+Step 3: Loading express

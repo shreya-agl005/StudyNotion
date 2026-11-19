@@ -32,6 +32,10 @@ export default function CourseInformationForm() {
   const [loading, setLoading] = useState(false)
   const [courseCategories, setCourseCategories] = useState([])
 
+  // course.category is a populated object after fetching full details,
+  // but only an id right after creating the course
+  const courseCategoryId = course?.category?._id ?? course?.category
+
   useEffect(() => {
     const getCategories = async () => {
       setLoading(true)
@@ -50,7 +54,7 @@ export default function CourseInformationForm() {
       setValue("coursePrice", course.price)
       setValue("courseTags", course.tag)
       setValue("courseBenefits", course.whatYouWillLearn)
-      setValue("courseCategory", course.category)
+      setValue("courseCategory", courseCategoryId)
       setValue("courseRequirements", course.instructions)
       setValue("courseImage", course.thumbnail)
     }
@@ -58,6 +62,15 @@ export default function CourseInformationForm() {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // The category <option>s only exist once categories have loaded,
+  // so select the course's category again at that point
+  useEffect(() => {
+    if (editCourse && courseCategories.length > 0) {
+      setValue("courseCategory", courseCategoryId)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseCategories])
 
   const isFormUpdated = () => {
     const currentValues = getValues()
@@ -68,7 +81,7 @@ export default function CourseInformationForm() {
       currentValues.coursePrice !== course.price ||
       currentValues.courseTags.toString() !== course.tag.toString() ||
       currentValues.courseBenefits !== course.whatYouWillLearn ||
-      currentValues.courseCategory._id !== course.category._id ||
+      currentValues.courseCategory !== courseCategoryId ||
       currentValues.courseRequirements.toString() !==
         course.instructions.toString() ||
       currentValues.courseImage !== course.thumbnail
@@ -107,7 +120,7 @@ export default function CourseInformationForm() {
         if (currentValues.courseBenefits !== course.whatYouWillLearn) {
           formData.append("whatYouWillLearn", data.courseBenefits)
         }
-        if (currentValues.courseCategory._id !== course.category._id) {
+        if (currentValues.courseCategory !== courseCategoryId) {
           formData.append("category", data.courseCategory)
         }
         if (
@@ -296,6 +309,7 @@ export default function CourseInformationForm() {
       <div className="flex justify-end gap-x-2">
         {editCourse && (
           <button
+            type="button"
             onClick={() => dispatch(setStep(2))}
             disabled={loading}
             className={`flex cursor-pointer items-center gap-x-2 rounded-md bg-richblack-300 py-[8px] px-[20px] font-semibold text-richblack-900`}

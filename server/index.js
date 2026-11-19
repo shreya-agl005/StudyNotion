@@ -12,12 +12,16 @@ const cors = require("cors");
 const { cloudinaryConnect } = require("./config/cloudinary");
 const fileUpload = require("express-fileupload");
 const dotenv = require("dotenv");
+const path = require("path");
+const os = require("os");
+const fs = require("fs");
+
+// Loading environment variables from .env file
+dotenv.config({ path: path.join(__dirname, ".env") });
+
 
 // Setting up port number
 const PORT = process.env.PORT || 4000;
-
-// Loading environment variables from .env file
-dotenv.config();
 
 // Connecting to database
 database.connect();
@@ -34,7 +38,7 @@ app.use(
 app.use(
 	fileUpload({
 		useTempFiles: true,
-		tempFileDir: "/tmp/",
+		tempFileDir: os.tmpdir(),
 	})
 );
 
@@ -48,13 +52,35 @@ app.use("/api/v1/course", courseRoutes);
 app.use("/api/v1/payment", paymentRoutes);
 app.use("/api/v1/reach", contactUsRoute);
 
-// Testing the server
-app.get("/", (req, res) => {
+// API health check
+app.get("/api-status", (req, res) => {
 	return res.json({
 		success: true,
 		message: "Your server is up and running ...",
 	});
 });
+
+// Unknown API routes
+app.use("/api", (req, res) => {
+	return res.status(404).json({ success: false, message: "API route not found" });
+});
+
+// Serve the React production build (created by `npm run build`) if it exists.
+// During development the React app runs separately on port 3000 instead.
+const buildPath = path.join(__dirname, "../build");
+if (fs.existsSync(path.join(buildPath, "index.html"))) {
+	app.use(express.static(buildPath));
+	app.get("*", (req, res) => {
+		return res.sendFile(path.join(buildPath, "index.html"));
+	});
+} else {
+	app.get("/", (req, res) => {
+		return res.json({
+			success: true,
+			message: "Your server is up and running ...",
+		});
+	});
+}
 
 // Listening to the server
 app.listen(PORT, () => {
