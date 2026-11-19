@@ -93,6 +93,12 @@ async function seedDatabase() {
       console.log("[Seed] Demo categories created successfully!");
     }
 
+    // The demo instructor has a publicly known password, so it (and the demo
+    // courses that need it) are only created when explicitly enabled.
+    if (process.env.SEED_DEMO_DATA !== "true") {
+      return;
+    }
+
     // Check if instructor user exists
     let instructor = await User.findOne({ accountType: "Instructor" });
     if (!instructor) {
